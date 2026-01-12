@@ -1,104 +1,118 @@
 import streamlit as st
 import cv2
 import numpy as np
-from PIL import Image
 import pandas as pd
 import plotly.express as px
+from PIL import Image
+import time
 
-# --- 页面基础配置 ---
-st.set_page_config(page_title="VisionAI Hub - 智图工坊", layout="wide", page_icon="🖼️")
-
-# --- 界面美化 (CSS) ---
+# --- 1. 全局配置与美化 ---
+st.set_page_config(page_title="DIP Intelligence Nexus", layout="wide", page_icon="🧠")
 st.markdown("""
     <style>
-    .main { background-color: #f0f2f6; }
-    .stTabs [data-baseweb="tab-list"] { gap: 24px; }
-    .stTabs [data-baseweb="tab"] { height: 50px; white-space: pre-wrap; background-color: #f8f9fa; border-radius: 4px; border: 1px solid #e0e0e0; }
-    .stTabs [aria-selected="true"] { background-color: #1A237E; color: white; }
+    .stApp { background-color: #0E1117; color: #FFFFFF; }
+    .module-box { border: 1px solid #30363d; padding: 20px; border-radius: 10px; background: #161b22; margin-bottom: 20px; }
+    .ai-badge { background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%); color: black; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: bold; }
     </style>
-    """, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
-# --- 侧边栏导航 ---
-st.sidebar.title("🖼️ 智图工坊 VisionAI Hub")
-st.sidebar.markdown("---")
-menu = st.sidebar.radio("教学流程导航", ["首页·全景概览", "课前·智算设计", "课中·智感互动", "课后·精准评价", "课外·创新拓展"])
-
-# --- 模块 1: 首页 ---
-if menu == "首页·全景概览":
-    st.title("《数字图像处理》全流程智慧教学空间")
-    st.info("💡 教学理念：AI赋能全链路 (BOPPPS) + 产教融合实战")
-    
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        st.subheader("核心模块说明")
-        st.write("1. **智算设计**：AI分析学生画像，精准锚定教学起点。")
-        st.write("2. **智感互动**：AI镜像实验室，实现算法逻辑实时推演。")
-        st.write("3. **精准评价**：全过程数据采集，生成个人素质画像。")
-        st.write("4. **创新拓展**：链接前沿科研与工业视觉案例。")
-    with col2:
-        # 基于报告图22的数据模拟达成度
-        radar_df = pd.DataFrame(dict(r=[92, 88, 95, 85, 90],
-                                   theta=['基础知识','算法实践','创新思维','工程素养','团队协作']))
-        fig = px.line_polar(radar_df, r='r', theta='theta', line_close=True)
-        st.plotly_chart(fig, use_container_width=True)
-
-# --- 模块 2: 课前 (AI赋能学情预测) ---
-elif menu == "课前·智算设计":
-    st.header("🔍 课前学情监测与知识图谱")
-    tab1, tab2 = st.tabs(["立体化课程图谱", "AI 预习诊断"])
-    with tab1:
-        st.write("点击节点查看知识点依赖关系（模拟知识图谱视图）")
-        st.image("https://img.icons8.com/color/480/network.png", width=300) # 此处可替换为您报告中的图谱
-    with tab2:
-        st.markdown("### 📊 本周学情画像")
-        st.warning("系统发现：35% 的同学对‘频域滤波’的基础数学概念理解较弱。")
-        st.button("AI 自动优化本课导学案")
-
-# --- 模块 3: 课中 (AI实验室 - 核心功能) ---
-elif menu == "课中·智感互动":
-    st.header("🧪 AI 镜像实验室")
-    st.write("无需配置环境，在线运行 OpenCV 算法进行逻辑验证。")
-    
-    uploaded_file = st.file_uploader("请上传一张待处理图像", type=["jpg", "jpeg", "png"])
-    
-    if uploaded_file:
-        image = Image.open(uploaded_file)
-        img_array = np.array(image)
-        
-        col_l, col_r = st.columns(2)
-        with col_l:
-            st.image(image, caption="原始图像", use_column_width=True)
-            
-        with col_r:
-            algo = st.selectbox("选择算法算子", ["均值滤波", "Canny边缘检测", "灰度直方图均衡化"])
-            
-            if algo == "均值滤波":
-                k = st.slider("核尺寸", 1, 31, 5, step=2)
-                res = cv2.blur(img_array, (k, k))
-            elif algo == "Canny边缘检测":
-                t1 = st.slider("低阈值", 0, 255, 100)
-                t2 = st.slider("高阈值", 0, 255, 200)
-                res = cv2.Canny(img_array, t1, t2)
-            elif algo == "灰度直方图均衡化":
-                gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
-                res = cv2.equalizeHist(gray)
-            
-            st.image(res, caption="AI 实时处理结果", use_column_width=True)
-
-# --- 模块 4: 课后 (AI 评价) ---
-elif menu == "课后·精准评价":
-    st.header("🤖 AI 专项辅导与评价")
-    st.text_input("输入你的代码问题或算法困惑：")
-    if st.button("AI 导师诊断"):
-        st.success("根据你的描述，建议检查卷积核是否进行了归一化处理，防止溢出。")
-    
+# --- 2. 侧边栏：角色切换与导航 ---
+with st.sidebar:
+    st.title("🛡️ Nexus 导航中心")
+    role = st.toggle("教师管理模式", value=False)
     st.markdown("---")
-    st.subheader("学生满意度分析词云")
-    st.image("https://via.placeholder.com/600x200.png?text=AI+Generated+WordCloud", caption="基于真实评价生成的词云")
+    if role:
+        menu = st.radio("教师空间", ["备课助手", "课堂监控", "评价看板", "教研辅助"])
+    else:
+        menu = st.radio("学习空间", ["知识图谱", "AI实验室", "作业中心", "竞赛/资料"])
 
-# --- 模块 5: 课外 ---
-elif menu == "课外·创新拓展":
-    st.header("🏗️ 产教融合与科研孵化")
-    st.write("提供真实工业数据集与竞赛指导。")
-    st.button("下载：工业缺陷检测数据集")
-    st.button("查看：2025年蓝桥杯图像处理算法解析")
+# --- 3. 核心逻辑实现 ---
+
+# 模块一：课前设计 (教师端示例)
+if role and menu == "备课助手":
+    st.header("📝 AI 智能备课助手 <span class='ai-badge'>AI赋能</span>", unsafe_allow_html=True)
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        st.subheader("课程大纲智能生成")
+        target = st.text_input("输入本节教学目标", "掌握空域直方图均衡化数学原理及OpenCV实现")
+        if st.button("生成大纲 & 素材建议"):
+            with st.status("AI 正在检索知识图谱..."):
+                time.sleep(1)
+                st.write("✅ **大纲已生成**：1. 概率密度函数(PDF)回顾 2. 累积分布函数(CDF)变换 3. 离散映射实现")
+                st.write("📌 **素材推荐**：检测到您需要展示对比效果，已从库中调用‘经典灰度图像集’。")
+    with col2:
+        st.subheader("PPT 框架预览")
+        st.code("# Slide 1: Introduction\n# Slide 2: Mathematical Foundation\n# Slide 3: Code Demo", language="markdown")
+
+# 模块二：课中互动 (学生端：算法演示器)
+elif not role and menu == "AI实验室":
+    st.header("🧪 算法演示与在线实验 <span class='ai-badge'>GPU加速</span>", unsafe_allow_html=True)
+    tab1, tab2 = st.tabs(["参数调优可视化", "Jupyter 代码实验"])
+    
+    with tab1:
+        uploaded_file = st.file_uploader("上传实验图像", type=["jpg", "png"])
+        if uploaded_file:
+            img = Image.open(uploaded_file)
+            img_np = np.array(img)
+            
+            c1, c2, c3 = st.columns([1, 2, 1])
+            with c1:
+                algo_type = st.selectbox("选择算法", ["高斯滤波", "Canny边缘检测", "阈值分割"])
+                if algo_type == "高斯滤波":
+                    k = st.slider("核尺寸 (ksize)", 1, 31, 5, 2)
+                    sigma = st.slider("标准差 (sigma)", 0.1, 5.0, 1.0)
+                    res = cv2.GaussianBlur(img_np, (k, k), sigma)
+                elif algo_type == "Canny边缘检测":
+                    low = st.slider("低阈值", 0, 255, 100)
+                    high = st.slider("高阈值", 0, 255, 200)
+                    res = cv2.Canny(img_np, low, high)
+                
+                st.button("保存实验结果至报告")
+            
+            with c2:
+                st.image(res, caption="实时处理效果", use_column_width=True)
+            with c3:
+                st.markdown("### AI 诊断说明")
+                st.info("当前核尺寸较大，图像细节损失严重，建议尝试减小 ksize。")
+
+# 模块三：课后评价 (双端：学情分析)
+elif menu in ["评价看板", "作业中心"]:
+    st.header("📊 全过程学情评价系统")
+    # 模拟雷达图数据
+    df = pd.DataFrame(dict(r=[85, 92, 70, 88, 95],
+                           theta=['数学推导', '代码实现', '工程应用', '文献综述', '创新设计']))
+    fig = px.line_polar(df, r='r', theta='theta', line_close=True, template="plotly_dark")
+    
+    col_a, col_b = st.columns([1, 1])
+    with col_a:
+        st.plotly_chart(fig, use_container_width=True)
+    with col_b:
+        st.subheader("个性化反馈报告")
+        if role:
+            st.write("班级整体掌握度：**优**")
+            st.write("异常预警：3名同学编程作业存在逻辑重复，疑似代码拷贝。")
+        else:
+            st.success("你的代码实现能力已超过 90% 的同学！")
+            st.warning("建议补充学习：‘快速傅里叶变换的蝴蝶操作’。")
+
+# 模块四：课外拓展 (文献与项目库)
+elif menu in ["教研辅助", "竞赛/资料"]:
+    st.header("📚 创新拓展资源库")
+    cols = st.columns(3)
+    with cols[0]:
+        st.subheader("📄 文献摘要助手")
+        st.file_uploader("上传论文 PDF")
+        st.button("AI 一键提取摘要")
+    with cols[1]:
+        st.subheader("🏆 竞赛案例")
+        st.markdown("- [2024蓝桥杯] 图像修复赛题解析\n- [大创项目] 基于YOLO的农业病虫害检测")
+    with cols[2]:
+        st.subheader("💡 算法百科")
+        st.markdown("**SIFT算子**：尺度不变特征变换...")
+        st.button("查看动态演化原理")
+
+# --- 4. 底部全天候AI助手 ---
+st.markdown("---")
+with st.expander("💬 24/7 AI 智能问答助手 (支持代码调试)"):
+    st.text_input("请输入您的问题（如：这段代码报错的原因是？）")
+    st.caption("基于课程知识库，为您提供精准解答")
